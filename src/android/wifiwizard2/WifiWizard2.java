@@ -321,7 +321,7 @@ public class WifiWizard2 extends CordovaPlugin {
 
         Log.v(TAG, "Entering timeout");
 
-        final int TEN_SECONDS = 10000;
+        final int TEN_SECONDS = 30000;
 
         try {
           Thread.sleep(TEN_SECONDS);
