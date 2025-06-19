@@ -346,7 +346,7 @@
                                 callbackId:command.callbackId];
 }
 
-(NSString*) getWifiSsid {
+- (NSString*) getWifiSsid {
     if (@available(iOS 13.0, *)) {
         CLLocationManager* manager = [[CLLocationManager alloc] init];
         CLAuthorizationStatus authStatus = [manager authorizationStatus];
