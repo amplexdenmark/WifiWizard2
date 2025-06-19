@@ -67,7 +67,7 @@
                                  passphrase:passwordString
                                  isWEP:(BOOL)false];
             }
-            configuration.joinOnce = false
+            configuration.joinOnce = false;
               
             [[NEHotspotConfigurationManager sharedManager] applyConfiguration:configuration completionHandler:^(NSError * _Nullable error) {
                 
