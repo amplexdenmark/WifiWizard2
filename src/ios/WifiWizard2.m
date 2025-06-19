@@ -50,24 +50,23 @@
     passwordString = [options objectForKey:@"Password"];
 
     if (@available(iOS 11.0, *)) {
-        if (ssidString && [ssidString length]) {
+      if (ssidString && [ssidString length]) {
             NEHotspotConfiguration *configuration;
 
-            configuration = [[NEHotspotConfiguration
-                                    alloc] initWithSSID:ssidString
-                                    passphrase:passwordString
-                                    isWEP:(BOOL)false];
-            
-            
+
             if (@available(iOS 13.0, *)) {
+               configuration = [[NEHotspotConfiguration
+                                   alloc] initWithSSIDPrefix:ssidString
+                                  passphrase:passwordString
+                                  isWEP:(BOOL)false];
+            } else {
                 configuration = [[NEHotspotConfiguration
-                                  alloc] initWithSSIDPrefix:ssidString
+                                  alloc] initWithSSID:ssidString
                                  passphrase:passwordString
                                  isWEP:(BOOL)false];
             }
-            
-            configuration.joinOnce = false;
-            
+            configuration.joinOnce = false
+              
             [[NEHotspotConfigurationManager sharedManager] applyConfiguration:configuration completionHandler:^(NSError * _Nullable error) {
                 
                 NSDictionary *r = [self fetchSSIDInfo];
@@ -110,8 +109,16 @@
 
     if (@available(iOS 11.0, *)) {
         if (ssidString && [ssidString length]) {
-            NEHotspotConfiguration *configuration = [[NEHotspotConfiguration
-                    alloc] initWithSSID:ssidString];
+          NEHotspotConfiguration *configuration;
+          
+          
+          if (@available(iOS 13.0, *)) {
+            configuration = [[NEHotspotConfiguration
+                                    alloc] initWithSSIDPrefix:ssidString];
+          } else {
+            configuration = [[NEHotspotConfiguration
+                                   alloc] initWithSSID:ssidString];
+          }
 
             configuration.joinOnce = false;
 
@@ -121,8 +128,8 @@
 
                 NSString *ssid = [r objectForKey:(id)kCNNetworkInfoKeySSID]; //@"SSID"
 
-                if ([ssid isEqualToString:ssidString]){
-                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:ssidString];
+               if ([ssid hasPrefix:ssidString]){
+                    pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:ssid];
                 }else{
                     pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.description];
                 }
@@ -171,9 +178,7 @@
 
 - (void)getConnectedSSID:(CDVInvokedUrlCommand*)command {
     CDVPluginResult *pluginResult = nil;
-    NSDictionary *r = [self fetchSSIDInfo];
-
-    NSString *ssid = [r objectForKey:(id)kCNNetworkInfoKeySSID]; //@"SSID"
+    NSString *ssid = [self getWifiSsid]; //@"SSID"
 
     if (ssid && [ssid length]) {
         pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:ssid];
@@ -339,5 +344,39 @@
                                 callbackId:command.callbackId];
 }
 
+(NSString*) getWifiSsid {
+    if (@available(iOS 13.0, *)) {
+        CLLocationManager* manager = [[CLLocationManager alloc] init];
+        CLAuthorizationStatus authStatus = [manager authorizationStatus];
+
+        if (authStatus == kCLAuthorizationStatusNotDetermined) {
+            [manager requestWhenInUseAuthorization];
+        } else if (authStatus == kCLAuthorizationStatusDenied) {
+            NSLog(@"User has explicitly denied authorization for this application, or location services are disabled in Settings.");
+            return nil;
+        } 
+    }
+
+    NSString *wifiName = nil;
+    CFArrayRef wifiInterfaces = CNCopySupportedInterfaces();
+    if (!wifiInterfaces) {
+        return nil;
+    }
+
+    NSArray *interfaces = (__bridge NSArray *)wifiInterfaces;
+    for (NSString *interfaceName in interfaces) {
+        CFDictionaryRef dictRef = CNCopyCurrentNetworkInfo((__bridge CFStringRef)(interfaceName));
+
+        if (dictRef) {
+            NSDictionary *networkInfo = (__bridge NSDictionary *)dictRef;
+            NSLog(@"network info -> %@", networkInfo);
+            wifiName = [networkInfo objectForKey:(__bridge NSString *)kCNNetworkInfoKeySSID];
+            CFRelease(dictRef);
+        }
+    }
+
+    CFRelease(wifiInterfaces);
+    return wifiName;
+}
 
 @end
