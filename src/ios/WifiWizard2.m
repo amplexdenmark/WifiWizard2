@@ -45,11 +45,15 @@
 
     NSString * ssidString;
     NSString * passwordString;
+    BOOL * joinOnce;
     NSDictionary* options = [[NSDictionary alloc]init];
 
     options = [command argumentAtIndex:0];
+    NSLog(@"connect options info -> %@", options);
     ssidString = [options objectForKey:@"Ssid"];
     passwordString = [options objectForKey:@"Password"];
+    joinOnce = [options objectForKey:@"joinOnce"];
+    NSLog(@"joinOnce -> %@", joinOnce);
 
     if (@available(iOS 11.0, *)) {
       if (ssidString && [ssidString length]) {
@@ -67,7 +71,7 @@
                                  passphrase:passwordString
                                  isWEP:(BOOL)false];
             }
-            configuration.joinOnce = false;
+            configuration.joinOnce = joinOnce;
               
             [[NEHotspotConfigurationManager sharedManager] applyConfiguration:configuration completionHandler:^(NSError * _Nullable error) {
                 
