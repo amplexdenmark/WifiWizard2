@@ -45,7 +45,7 @@
 
     NSString * ssidString;
     NSString * passwordString;
-    BOOL * joinOnce;
+    BOOL joinOnce;
     NSDictionary* options = [[NSDictionary alloc]init];
 
     options = [command argumentAtIndex:0];
